@@ -3,6 +3,7 @@ from .db_state import DatabaseState
 import logging
 import pandas as pd
 from typing import Any
+import json
 
 
 class QueryState(rx.State):
@@ -18,6 +19,39 @@ class QueryState(rx.State):
         if not self.query_results:
             return []
         return list(self.query_results[0].keys())
+
+    @rx.event
+    def download_data(self):
+        """Download the current query results as a JSON file."""
+        from .dashboard_state import DashboardState
+
+        if not self.query_results:
+            return rx.toast.error("No data to download.")
+        filename = f"{DashboardState.selected_table}.json"
+        data = json.dumps(self.query_results, indent=2)
+        return rx.download(data=data, filename=filename)
+
+    @rx.event
+    async def handle_data_upload(self, files: list[rx.UploadFile]):
+        """Handle upload of a JSON data file."""
+        if not files:
+            yield rx.toast.error("No file selected for upload.")
+            return
+        file = files[0]
+        try:
+            data = await file.read()
+            json_data = json.loads(data)
+            if not isinstance(json_data, list) or not all(
+                (isinstance(item, dict) for item in json_data)
+            ):
+                raise ValueError("JSON must be an array of objects.")
+            self.query_results = json_data
+            self.is_loading = False
+            self.query_error = ""
+            yield rx.toast.success(f"Successfully loaded {file.name}")
+        except Exception as e:
+            logging.exception(f"Failed to process uploaded file: {e}")
+            yield rx.toast.error(f"Invalid JSON file: {e}")
 
     @rx.event
     async def fetch_data(self, table_name: str):

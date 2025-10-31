@@ -36,8 +36,9 @@ def sidebar() -> rx.Component:
         ),
         rx.el.div(
             rx.el.div(class_name="flex-grow"),
+            upload_data_section(),
             environment_selector(),
-            class_name="border-t p-4 flex flex-col",
+            class_name="border-t p-4 flex flex-col gap-4",
         ),
         class_name="flex flex-col min-h-0 border-r w-64 h-screen shrink-0 bg-white",
     )
@@ -47,13 +48,26 @@ def main_content() -> rx.Component:
     """The main content area for displaying charts and stats."""
     return rx.el.main(
         rx.el.header(
-            rx.el.h1(
-                rx.cond(
-                    DashboardState.selected_table,
-                    f"Dashboard: {DashboardState.selected_table}",
-                    "Select a table to get started",
+            rx.el.div(
+                rx.el.h1(
+                    rx.cond(
+                        DashboardState.selected_table,
+                        f"Dashboard: {DashboardState.selected_table}",
+                        "Select a table to get started",
+                    ),
+                    class_name="text-2xl font-bold",
                 ),
-                class_name="text-2xl font-bold",
+                rx.cond(
+                    DashboardState.selected_table != "",
+                    rx.el.button(
+                        rx.icon("download", class_name="h-4 w-4 mr-2"),
+                        "Download JSON",
+                        on_click=QueryState.download_data,
+                        class_name="flex items-center px-3 py-1.5 border rounded-md text-sm bg-white hover:bg-gray-50",
+                    ),
+                    None,
+                ),
+                class_name="flex items-center justify-between w-full",
             ),
             class_name="border-b p-4",
         ),
@@ -208,6 +222,42 @@ def environment_selector() -> rx.Component:
             "Manage",
             on_click=CredentialsState.toggle_modal(True),
             class_name="mt-2 flex items-center justify-center w-full text-sm text-blue-600 hover:underline",
+        ),
+        class_name="w-full",
+    )
+
+
+def upload_data_section() -> rx.Component:
+    """Component for uploading data JSON file."""
+    return rx.el.div(
+        rx.el.label("Upload Data", class_name="text-sm font-medium text-gray-700 mb-1"),
+        rx.upload.root(
+            rx.el.div(
+                rx.icon("cloud_upload", class_name="w-6 h-6 text-gray-500"),
+                rx.el.p("Drop JSON or click", class_name="text-xs text-gray-500"),
+                class_name="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-md cursor-pointer",
+            ),
+            id="upload_data",
+            accept={"application/json": [".json"]},
+            multiple=False,
+            max_files=1,
+            on_drop=QueryState.handle_data_upload(
+                rx.upload_files(upload_id="upload_data")
+            ),
+            class_name="w-full",
+        ),
+        rx.foreach(
+            rx.selected_files("upload_data"),
+            lambda file: rx.el.div(
+                rx.el.p(file, class_name="text-xs text-gray-600"),
+                rx.el.button(
+                    rx.icon("x", class_name="h-3 w-3"),
+                    on_click=rx.clear_selected_files("upload_data"),
+                    size="1",
+                    class_name="p-1",
+                ),
+                class_name="flex items-center justify-between text-sm mt-1",
+            ),
         ),
         class_name="w-full",
     )
