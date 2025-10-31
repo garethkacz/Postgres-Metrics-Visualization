@@ -3,6 +3,8 @@ from app.states.db_state import DatabaseState
 from app.states.dashboard_state import DashboardState
 from app.states.query_state import QueryState
 from app.states.credentials_state import CredentialsState, Env
+from app.states.viz_state import VizState
+from app.components.visualizations import faults_chart, jobs_chart, bots_chart
 
 
 def sidebar() -> rx.Component:
@@ -57,34 +59,44 @@ def main_content() -> rx.Component:
         ),
         rx.el.div(
             rx.cond(
-                DatabaseState.is_connected,
-                rx.cond(
-                    DashboardState.selected_table,
+                DashboardState.selected_table != "",
+                rx.el.div(
+                    rx.match(
+                        DashboardState.selected_table,
+                        ("faults", faults_chart()),
+                        ("jobs", jobs_chart()),
+                        ("bots", bots_chart()),
+                        rx.el.div(),
+                    ),
                     rx.cond(
-                        QueryState.is_loading,
-                        rx.el.div(
+                        DatabaseState.is_connected,
+                        rx.cond(
+                            QueryState.is_loading,
                             rx.el.div(
-                                class_name="h-8 w-full bg-gray-200 rounded animate-pulse"
+                                rx.el.div(
+                                    class_name="h-8 w-full bg-gray-200 rounded animate-pulse"
+                                ),
+                                rx.el.div(
+                                    class_name="h-8 w-full bg-gray-200 rounded animate-pulse mt-2"
+                                ),
+                                rx.el.div(
+                                    class_name="h-8 w-full bg-gray-200 rounded animate-pulse mt-2"
+                                ),
+                                rx.el.div(
+                                    class_name="h-8 w-full bg-gray-200 rounded animate-pulse mt-2"
+                                ),
+                                class_name="p-4",
                             ),
-                            rx.el.div(
-                                class_name="h-8 w-full bg-gray-200 rounded animate-pulse mt-2"
-                            ),
-                            rx.el.div(
-                                class_name="h-8 w-full bg-gray-200 rounded animate-pulse mt-2"
-                            ),
-                            rx.el.div(
-                                class_name="h-8 w-full bg-gray-200 rounded animate-pulse mt-2"
-                            ),
-                            class_name="p-4",
+                            data_table(),
                         ),
-                        data_table(),
+                        connection_error_card(),
                     ),
-                    rx.el.div(
-                        rx.el.p("Select a table from the sidebar to view its data."),
-                        class_name="flex items-center justify-center h-full text-gray-500",
-                    ),
+                    class_name="space-y-4 p-4",
                 ),
-                connection_error_card(),
+                rx.el.div(
+                    rx.el.p("Select a table from the sidebar to view its data."),
+                    class_name="flex items-center justify-center h-full text-gray-500",
+                ),
             ),
             class_name="flex-1 overflow-auto bg-gray-50",
         ),
@@ -158,7 +170,11 @@ def index() -> rx.Component:
         sidebar(),
         main_content(),
         credentials_modal(),
-        on_mount=[CredentialsState.load_credentials, DatabaseState.fetch_schema],
+        on_mount=[
+            CredentialsState.load_credentials,
+            DatabaseState.fetch_schema,
+            VizState.generate_sample_data,
+        ],
         class_name="flex min-h-screen w-screen font-['Inter']",
     )
 
