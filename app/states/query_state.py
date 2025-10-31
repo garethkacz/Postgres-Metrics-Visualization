@@ -22,15 +22,16 @@ class QueryState(rx.State):
         return list(self.query_results[0].keys())
 
     @rx.event
-    def download_data(self):
+    async def download_data(self):
         """Download the current query results as a JSON file."""
         from .dashboard_state import DashboardState
 
         if not self.query_results:
-            return rx.toast.error("No data to download.")
-        filename = f"{DashboardState.selected_table}.json"
-        data = json.dumps(self.query_results, indent=2)
-        return rx.download(data=data, filename=filename)
+            yield rx.toast.error("No data to download.")
+            return
+        dashboard_state = await self.get_state(DashboardState)
+        filename = f"{dashboard_state.selected_table}.json"
+        yield rx.download(data=self.query_results, filename=filename)
 
     @rx.event
     async def download_all_data(self):
@@ -71,8 +72,7 @@ class QueryState(rx.State):
                 self.is_downloading_all = False
                 return
             filename = f"database_export.json"
-            data_str = json.dumps(all_data, indent=2)
-            yield rx.download(data=data_str, filename=filename)
+            yield rx.download(data=all_data, filename=filename)
         except Exception as e:
             logging.exception(f"Error during all-data download: {e}")
             yield rx.toast.error("An unexpected error occurred.")

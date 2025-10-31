@@ -255,15 +255,12 @@ def upload_data_section() -> rx.Component:
             accept={"application/json": [".json"]},
             multiple=False,
             max_files=1,
-            on_drop=QueryState.handle_data_upload(
-                rx.upload_files(upload_id="upload_data")
-            ),
             class_name="w-full",
         ),
         rx.foreach(
             rx.selected_files("upload_data"),
             lambda file: rx.el.div(
-                rx.el.p(file, class_name="text-xs text-gray-600"),
+                rx.el.p(file, class_name="text-xs text-gray-600 truncate"),
                 rx.el.button(
                     rx.icon("x", class_name="h-3 w-3"),
                     on_click=rx.clear_selected_files("upload_data"),
@@ -272,6 +269,17 @@ def upload_data_section() -> rx.Component:
                 ),
                 class_name="flex items-center justify-between text-sm mt-1",
             ),
+        ),
+        rx.cond(
+            rx.selected_files("upload_data").length() > 0,
+            rx.el.button(
+                "Upload",
+                on_click=QueryState.handle_data_upload(
+                    rx.upload_files(upload_id="upload_data")
+                ),
+                class_name="mt-2 w-full px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600",
+            ),
+            None,
         ),
         class_name="w-full",
     )
