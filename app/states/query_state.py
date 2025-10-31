@@ -32,9 +32,8 @@ class QueryState(rx.State):
             return
         dashboard_state = await self.get_state(DashboardState)
         filename = f"{dashboard_state.selected_table}.json"
-        yield rx.download(
-            data=json.dumps(self.query_results, indent=2), filename=filename
-        )
+        data_to_download = json.dumps(self.query_results, indent=2)
+        yield rx.download(data=data_to_download, filename=filename)
 
     @rx.event
     async def download_all_data(self):
