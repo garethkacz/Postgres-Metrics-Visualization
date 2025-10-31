@@ -59,6 +59,16 @@ def main_content() -> rx.Component:
                 ),
                 rx.el.div(
                     rx.cond(
+                        QueryState.is_uploaded_data,
+                        rx.el.button(
+                            rx.icon("trash-2", class_name="h-4 w-4 mr-2"),
+                            "Clear Uploaded Data",
+                            on_click=QueryState.clear_uploaded_data,
+                            class_name="flex items-center px-3 py-1.5 border rounded-md text-sm bg-red-50 text-red-600 hover:bg-red-100",
+                        ),
+                        None,
+                    ),
+                    rx.cond(
                         DashboardState.selected_table != "",
                         rx.el.button(
                             rx.icon("download", class_name="h-4 w-4 mr-2"),
@@ -97,7 +107,7 @@ def main_content() -> rx.Component:
                         rx.el.div(),
                     ),
                     rx.cond(
-                        DatabaseState.is_connected,
+                        DatabaseState.is_connected | QueryState.is_uploaded_data,
                         rx.cond(
                             QueryState.is_loading,
                             rx.el.div(

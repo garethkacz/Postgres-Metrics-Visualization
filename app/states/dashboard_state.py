@@ -7,6 +7,7 @@ class DashboardState(rx.State):
     """Manages the state for the dashboard UI."""
 
     selected_table: str = ""
+    data_source: str = "database"
 
     @rx.event
     def set_selected_table(self, table_name: str):
@@ -14,6 +15,8 @@ class DashboardState(rx.State):
         from .viz_state import VizState
 
         self.selected_table = table_name
+        self.data_source = "database"
+        yield QueryState.set_is_uploaded_data(False)
         yield QueryState.fetch_data(table_name)
         yield VizState.update_viz_data
 
