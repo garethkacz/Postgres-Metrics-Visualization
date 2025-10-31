@@ -29,8 +29,9 @@ class QueryState(rx.State):
         self.query_results = []
         yield
         db_state = await self.get_state(DatabaseState)
-        conn = db_state._get_db_conn()
+        conn = await db_state._get_db_conn()
         if not conn:
+            db_state = await self.get_state(DatabaseState)
             self.query_error = db_state.connection_error
             self.is_loading = False
             return
@@ -46,4 +47,3 @@ class QueryState(rx.State):
             if conn:
                 conn.close()
             self.is_loading = False
-            yield

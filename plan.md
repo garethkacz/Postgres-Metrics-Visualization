@@ -52,7 +52,21 @@ Build a full-stack web application that connects to a local PostgreSQL database,
 
 ---
 
-## Phase 5: Interactive Features & Polish
+## Phase 5: Multi-Environment Database Credential Management
+- [ ] Create credentials state management system with environment support
+- [ ] Build credential storage with encryption/secure handling
+- [ ] Implement database connection form (host, port, database, username, password, environment name)
+- [ ] Add connection testing functionality
+- [ ] Create environment dropdown selector in the UI
+- [ ] Build credentials management modal/page
+- [ ] Add CRUD operations for saved environments
+- [ ] Implement active environment persistence
+- [ ] Update database connection logic to use selected environment
+- [ ] Add connection status indicator in UI
+
+---
+
+## Phase 6: Interactive Features & Polish
 - [ ] Add real-time chart updates when filters change
 - [ ] Implement chart legends and tooltips
 - [ ] Create export functionality (CSV, JSON)
@@ -63,7 +77,7 @@ Build a full-stack web application that connects to a local PostgreSQL database,
 
 ---
 
-## Phase 6: Performance & Documentation
+## Phase 7: Performance & Documentation
 - [ ] Optimize database queries with indexing suggestions
 - [ ] Implement query result caching
 - [ ] Add pagination for large datasets
@@ -76,33 +90,23 @@ Build a full-stack web application that connects to a local PostgreSQL database,
 
 ## Current Status
 ✅ Completed Phases 1, 2, 3, and 4
+🔄 Working on Phase 5: Multi-Environment Database Credential Management
 
-**Phase 4 Deliverables:**
-- Heuristic engine for automatic column type classification
-- Auto-visualization logic that recommends chart types based on data
-- Smart metric detection for numeric columns
-- KPI card components showing aggregations (sum, avg, min, max, count)
-- Line chart component for time series visualization
-- Bar chart component for categorical breakdowns
-- Filter controls for selecting metrics and chart types
-- Automatic chart generation on table selection
-- Visualization state management with chart configuration
-
-**Key Features Added:**
-- Automatic detection of time series, numeric, and categorical columns
-- Smart chart recommendations (line for time series, bar for categorical)
-- KPI cards with real-time aggregations
-- Dynamic chart rendering based on data types
-- Filter dropdowns for metric selection
-- Chart type switching
-- Clean grid layout for visualizations
+**Next Steps:**
+Implement a credential management system that allows users to:
+1. Add/edit/delete database connection configurations
+2. Store credentials for multiple environments (dev, staging, prod, etc.)
+3. Select active environment from a dropdown
+4. Test connections before saving
+5. Securely persist credentials locally
 
 ## Notes
 - Using psycopg2-binary for PostgreSQL connectivity
 - Reflex framework for unified Python frontend/backend
 - Pandas for efficient data manipulation and aggregation
-- Environment variable: DATABASE_URL for connection string
+- Environment variable: DATABASE_URL for connection string (will become optional)
 - Database connection includes proper error handling and timeouts
 - UI includes comprehensive loading and error states
 - Auto-visualization uses column name patterns and data types for intelligent chart selection
 - KPI aggregations calculated server-side for performance
+- Credentials will be stored in local JSON file with base64 encoding for basic obfuscation

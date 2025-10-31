@@ -3,6 +3,9 @@ import os
 import psycopg2
 from typing import TypedDict, Any
 import logging
+import base64
+import json
+from .credentials_state import CredentialsState
 
 
 class ColumnInfo(TypedDict):
@@ -25,10 +28,18 @@ class DatabaseState(rx.State):
         """Return a list of table names."""
         return [table["name"] for table in self.tables]
 
-    def _get_db_conn(self):
-        db_url = os.getenv("DATABASE_URL")
-        if not db_url or "=" in db_url:
-            db_url = "postgresql://postgres:postgres@10.20.18.167:5432/director_db"
+    async def _get_db_conn(self):
+        creds_state = await self.get_state(CredentialsState)
+        if not creds_state or not creds_state.active_environment:
+            self.connection_error = "No active database environment selected."
+            self.is_connected = False
+            return None
+        env = creds_state.get_active_env
+        if not env:
+            self.connection_error = "Active environment not found."
+            self.is_connected = False
+            return None
+        db_url = f"postgresql://{env.username}:{env.password}@{env.host}:{env.port}/{env.database}"
         try:
             conn = psycopg2.connect(dsn=db_url, connect_timeout=3)
             return conn
@@ -41,9 +52,9 @@ class DatabaseState(rx.State):
             return None
 
     @rx.event
-    def fetch_schema(self):
+    async def fetch_schema(self):
         """Connect to the database and fetch the schema."""
-        conn = self._get_db_conn()
+        conn = await self._get_db_conn()
         if not conn:
             return
         self.is_connected = True
