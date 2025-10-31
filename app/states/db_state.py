@@ -45,25 +45,37 @@ class DatabaseState(rx.State):
             return None
         if env.ssh_host and env.ssh_user and env.ssh_key:
             try:
-                pkey = self._parse_ssh_key(env.ssh_key)
-                if not pkey:
-                    raise paramiko.SSHException(
-                        "Unsupported or invalid SSH private key format"
-                    )
+                pkey, err = self._parse_ssh_key(env.ssh_key)
+                if err:
+                    self.connection_error = f"SSH Key Error: {err}"
+                    self.is_connected = False
+                    return None
                 tunnel = SSHTunnelForwarder(
                     (env.ssh_host, env.ssh_port),
                     ssh_username=env.ssh_user,
                     ssh_pkey=pkey,
                     remote_bind_address=(env.host, env.port),
+                    logger=logging.getLogger(__name__),
                 )
                 tunnel.start()
                 self._tunnel = tunnel
                 db_host = tunnel.local_bind_host
                 db_port = tunnel.local_bind_port
+            except paramiko.AuthenticationException as e:
+                logging.exception("SSH Auth Error")
+                self.connection_error = f"SSH Authentication Failed: {e}. Please check your SSH user and private key."
+                self.is_connected = False
+                if self._tunnel and self._tunnel.is_active:
+                    self._tunnel.stop()
+                self._tunnel = None
+                return None
             except Exception as e:
                 logging.exception(f"SSH tunnel failed: {e}")
-                self.connection_error = f"SSH tunnel failed: {e}"
+                self.connection_error = f"SSH Tunnel Failed: {e}. Check your SSH host, port, and VPN connection."
                 self.is_connected = False
+                if self._tunnel and self._tunnel.is_active:
+                    self._tunnel.stop()
+                self._tunnel = None
                 return None
         else:
             db_host = env.host
@@ -123,16 +135,28 @@ class DatabaseState(rx.State):
                 self._tunnel.stop()
                 self._tunnel = None
 
-    def _parse_ssh_key(self, key_string: str):
+    def _parse_ssh_key(
+        self, key_string: str
+    ) -> tuple[paramiko.PKey | None, str | None]:
         """Parse SSH private key from string, trying multiple key types."""
-        key_types = [paramiko.RSAKey, paramiko.Ed25519Key, paramiko.ECDSAKey]
-        for key_class in key_types:
+        if not key_string or not key_string.strip():
+            return (None, "SSH private key is empty.")
+        key_types = [
+            (paramiko.RSAKey, "RSA"),
+            (paramiko.Ed25519Key, "Ed25519"),
+            (paramiko.ECDSAKey, "ECDSA"),
+            (paramiko.DSSKey, "DSS"),
+        ]
+        errors = []
+        for key_class, key_name in key_types:
             try:
                 key_file = io.StringIO(key_string)
-                return key_class.from_private_key(key_file)
+                pkey = key_class.from_private_key(key_file)
+                return (pkey, None)
             except paramiko.SSHException as e:
-                logging.exception(
-                    f"Failed to parse SSH key with {key_class.__name__}: {e}"
-                )
-                continue
-        return None
+                logging.exception(f"Error parsing {key_name} key")
+                errors.append(f"{key_name}: {e}")
+            except Exception as e:
+                logging.exception(f"Unhandled error parsing {key_name} key")
+                errors.append(f"{key_name}: Unhandled error - {e}")
+        return (None, f"Unsupported key format. Details: {'; '.join(errors)}")
