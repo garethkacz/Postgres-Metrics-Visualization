@@ -37,14 +37,15 @@ class VizState(rx.State):
         ][::-1]
         self.bots_data = [
             {
-                "timestamp": (now - datetime.timedelta(days=i)).strftime(
-                    "%Y-%m-%dT%H:%M:%S"
-                ),
-                "online": random.randint(80, 100),
-                "offline": random.randint(0, 10),
+                "id": f"bot-{i}",
+                "name": f"Bot {i}",
+                "position_x": round(random.uniform(-10, 10), 2),
+                "position_y": round(random.uniform(-10, 10), 2),
+                "battery_soc": random.randint(0, 100),
+                "state": random.choice(["IDLE", "MOVING", "CHARGING"]),
             }
-            for i in range(30)
-        ][::-1]
+            for i in range(5)
+        ]
 
     @rx.event
     async def update_viz_data(self):
@@ -52,11 +53,13 @@ class VizState(rx.State):
 
         qs = await self.get_state(QueryState)
         if not qs.query_results:
+            self.generate_sample_data()
             return
         ds = await self.get_state(DashboardState)
-        if ds.selected_table == "faults":
+        table = ds.selected_table
+        if "faults" in table:
             self.faults_data = qs.query_results
-        elif ds.selected_table == "jobs":
+        elif "jobs" in table:
             self.jobs_data = qs.query_results
-        elif ds.selected_table == "bots":
+        elif "bots" in table:
             self.bots_data = qs.query_results

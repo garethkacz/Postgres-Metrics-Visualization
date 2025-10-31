@@ -89,15 +89,13 @@ def jobs_chart() -> rx.Component:
 
 def bots_chart() -> rx.Component:
     return rx.el.div(
-        rx.recharts.bar_chart(
+        rx.recharts.scatter_chart(
             rx.recharts.cartesian_grid(horizontal=True, vertical=False, opacity=0.3),
-            rx.recharts.tooltip(**TOOLTIP_PROPS),
-            rx.recharts.x_axis(data_key="name"),
-            rx.recharts.y_axis(domain=[0, 100]),
-            rx.recharts.bar(
-                data_key="battery_soc", fill="#3b82f6", radius=[4, 4, 0, 0]
-            ),
-            data=VizState.bots_data,
+            rx.recharts.x_axis(data_key="position_x", type_="number", name="X"),
+            rx.recharts.y_axis(data_key="position_y", type_="number", name="Y"),
+            rx.recharts.z_axis(data_key="name", type_="category", name="Bot Name"),
+            rx.recharts.tooltip(**TOOLTIP_PROPS, cursor={"stroke_dasharray": "3 3"}),
+            rx.recharts.scatter(name="Bots", data=VizState.bots_data, fill="#3b82f6"),
             height=300,
             width="100%",
             margin={"left": 20, "right": 20, "top": 20, "bottom": 20},
