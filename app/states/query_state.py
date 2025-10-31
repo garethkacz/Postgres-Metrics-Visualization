@@ -4,6 +4,7 @@ import logging
 import pandas as pd
 from typing import Any
 import json
+from .credentials_state import CredentialsState
 
 
 class QueryState(rx.State):
@@ -31,7 +32,9 @@ class QueryState(rx.State):
             return
         dashboard_state = await self.get_state(DashboardState)
         filename = f"{dashboard_state.selected_table}.json"
-        yield rx.download(data=self.query_results, filename=filename)
+        yield rx.download(
+            data=json.dumps(self.query_results, indent=2), filename=filename
+        )
 
     @rx.event
     async def download_all_data(self):
@@ -71,8 +74,10 @@ class QueryState(rx.State):
                 yield rx.toast.warning("No data could be fetched from any table.")
                 self.is_downloading_all = False
                 return
-            filename = f"database_export.json"
-            yield rx.download(data=all_data, filename=filename)
+            creds_state = await self.get_state(CredentialsState)
+            env_name = creds_state.active_environment
+            filename = f"{env_name}_export.json"
+            yield rx.download(data=json.dumps(all_data, indent=2), filename=filename)
         except Exception as e:
             logging.exception(f"Error during all-data download: {e}")
             yield rx.toast.error("An unexpected error occurred.")
@@ -102,7 +107,6 @@ class QueryState(rx.State):
             self.is_loading = False
             self.query_error = ""
             yield rx.toast.success(f"Successfully loaded {file.name}")
-            yield QueryState.download_data
         except Exception as e:
             logging.exception(f"Failed to process uploaded file: {e}")
             yield rx.toast.error(f"Invalid JSON file: {e}")
