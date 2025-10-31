@@ -74,7 +74,8 @@ class CredentialsState(rx.State):
         self._save_to_local_storage()
         if not self.active_environment:
             self.active_environment = new_env.name
-        yield self._reload_schema()
+        for event in self._reload_schema():
+            yield event
         yield rx.toast.success(f"Saved environment: {new_env.name}")
         self.current_env = Env()
 
@@ -87,14 +88,14 @@ class CredentialsState(rx.State):
     def set_active_environment(self, env_name: str):
         """Set the active environment and reload schema."""
         self.active_environment = env_name
-        yield self._reload_schema()
+        for event in self._reload_schema():
+            yield event
 
     def _reload_schema(self):
         from .dashboard_state import DashboardState
         from .db_state import DatabaseState
 
-        yield DashboardState.set_selected_table("")
-        return DatabaseState.fetch_schema
+        return [DashboardState.set_selected_table(""), DatabaseState.fetch_schema]
 
     @rx.event
     def delete_environment(self, env_name: str):
@@ -105,7 +106,8 @@ class CredentialsState(rx.State):
                 self.environments[0].name if self.environments else ""
             )
         self._save_to_local_storage()
-        yield self._reload_schema()
+        for event in self._reload_schema():
+            yield event
 
     @rx.event
     def edit_environment(self, env_name: str):
