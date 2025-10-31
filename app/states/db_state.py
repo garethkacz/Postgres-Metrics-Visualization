@@ -154,9 +154,9 @@ class DatabaseState(rx.State):
                 pkey = key_class.from_private_key(key_file)
                 return (pkey, None)
             except paramiko.SSHException as e:
-                logging.exception(f"Error parsing {key_name} key")
+                logging.exception(f"Failed to parse key as {key_name}: {e}")
                 errors.append(f"{key_name}: {e}")
             except Exception as e:
-                logging.exception(f"Unhandled error parsing {key_name} key")
+                logging.exception(f"Unhandled error parsing {key_name} key: {e}")
                 errors.append(f"{key_name}: Unhandled error - {e}")
         return (None, f"Unsupported key format. Details: {'; '.join(errors)}")
