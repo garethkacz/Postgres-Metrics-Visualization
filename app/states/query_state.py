@@ -34,7 +34,7 @@ class QueryState(rx.State):
 
     @rx.event
     async def download_all_data(self):
-        """Download all tables from the database as a single JSON file."""
+        """Download all tables and their schemas from the database as a single JSON file."""
         self.is_downloading_all = True
         yield
         db_state = await self.get_state(DatabaseState)
@@ -49,12 +49,16 @@ class QueryState(rx.State):
             yield rx.toast.error(f"Connection failed: {db_state.connection_error}")
             return
         try:
-            for table_name in db_state.table_names:
+            for table_info in db_state.tables:
+                table_name = table_info["name"]
                 try:
                     query = f'SELECT * FROM "{table_name}";'
                     df = pd.read_sql_query(query, conn)
                     df = df.astype(str)
-                    all_data[table_name] = df.to_dict("records")
+                    all_data[table_name] = {
+                        "schema": table_info["columns"],
+                        "data": df.to_dict("records"),
+                    }
                 except Exception as e:
                     logging.exception(
                         f"Error fetching data for table {table_name} during all-data download: {e}"
@@ -66,7 +70,7 @@ class QueryState(rx.State):
                 yield rx.toast.warning("No data could be fetched from any table.")
                 self.is_downloading_all = False
                 return
-            filename = f"all_tables_export.json"
+            filename = f"database_export.json"
             data_str = json.dumps(all_data, indent=2)
             yield rx.download(data=data_str, filename=filename)
         except Exception as e:
@@ -75,6 +79,9 @@ class QueryState(rx.State):
         finally:
             if conn:
                 conn.close()
+            if db_state._tunnel:
+                db_state._tunnel.stop()
+                db_state._tunnel = None
             self.is_downloading_all = False
 
     @rx.event
