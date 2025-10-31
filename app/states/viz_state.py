@@ -48,10 +48,12 @@ class VizState(rx.State):
 
     @rx.event
     async def update_viz_data(self):
+        from .dashboard_state import DashboardState
+
         qs = await self.get_state(QueryState)
         if not qs.query_results:
             return
-        ds = await self.get_state((await self.get_state("__dashboard_state")).__class__)
+        ds = await self.get_state(DashboardState)
         if ds.selected_table == "faults":
             self.faults_data = qs.query_results
         elif ds.selected_table == "jobs":

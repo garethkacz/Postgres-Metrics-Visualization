@@ -25,6 +25,7 @@ class DatabaseState(rx.State):
     tables: list[TableInfo] = []
     is_connected: bool = False
     connection_error: str = ""
+    _tunnel: SSHTunnelForwarder | None = None
 
     @rx.var
     def table_names(self) -> list[str]:
@@ -56,7 +57,7 @@ class DatabaseState(rx.State):
                     remote_bind_address=(env.host, env.port),
                 )
                 tunnel.start()
-                self.set_vars(tunnel=tunnel)
+                self._tunnel = tunnel
                 db_host = tunnel.local_bind_host
                 db_port = tunnel.local_bind_port
             except Exception as e:
@@ -118,9 +119,9 @@ class DatabaseState(rx.State):
         finally:
             if conn:
                 conn.close()
-            if hasattr(self, "tunnel") and self.tunnel:
-                self.tunnel.stop()
-                self.set_vars(tunnel=None)
+            if self._tunnel:
+                self._tunnel.stop()
+                self._tunnel = None
 
     def _parse_ssh_key(self, key_string: str):
         """Parse SSH private key from string, trying multiple key types."""
