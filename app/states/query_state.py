@@ -122,7 +122,8 @@ class QueryState(rx.State):
                         )
                 else:
                     raise ValueError("JSON must be an array of objects.")
-            self.query_results = json_data
+            unique_records = list({tuple(sorted(d.items())) for d in json_data})
+            self.query_results = [dict(t) for t in unique_records]
             self.is_loading = False
             self.query_error = ""
             self.is_uploaded_data = True

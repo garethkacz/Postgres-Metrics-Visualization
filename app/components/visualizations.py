@@ -88,8 +88,20 @@ def jobs_chart() -> rx.Component:
 
 
 def bots_chart() -> rx.Component:
-    lines = [
-        {"key": "online", "color": "#3b82f6", "grad_id": "bots_online_grad"},
-        {"key": "offline", "color": "#6b7280", "grad_id": "bots_offline_grad"},
-    ]
-    return time_series_chart(VizState.bots_data, lines, "Bots Status")
+    return rx.el.div(
+        rx.recharts.bar_chart(
+            rx.recharts.cartesian_grid(horizontal=True, vertical=False, opacity=0.3),
+            rx.recharts.tooltip(**TOOLTIP_PROPS),
+            rx.recharts.x_axis(data_key="name"),
+            rx.recharts.y_axis(domain=[0, 100]),
+            rx.recharts.bar(
+                data_key="battery_soc", fill="#3b82f6", radius=[4, 4, 0, 0]
+            ),
+            data=VizState.bots_data,
+            height=300,
+            width="100%",
+            margin={"left": 20, "right": 20, "top": 20, "bottom": 20},
+            class_name="[&_.recharts-tooltip-wrapper]:z-50",
+        ),
+        class_name="rounded-lg border bg-white p-4",
+    )
