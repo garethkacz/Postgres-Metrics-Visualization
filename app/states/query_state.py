@@ -12,6 +12,13 @@ class QueryState(rx.State):
     query_results: list[dict] = []
     query_error: str = ""
 
+    @rx.var
+    def columns(self) -> list[str]:
+        """Get column names from query results."""
+        if not self.query_results:
+            return []
+        return list(self.query_results[0].keys())
+
     @rx.event
     async def fetch_data(self, table_name: str):
         """Fetch all data from the specified table."""

@@ -95,7 +95,7 @@ def data_table() -> rx.Component:
                 rx.el.thead(
                     rx.el.tr(
                         rx.foreach(
-                            QueryState.query_results[0].keys(),
+                            QueryState.columns,
                             lambda col: rx.el.th(
                                 col, class_name="p-2 text-left border-b"
                             ),
