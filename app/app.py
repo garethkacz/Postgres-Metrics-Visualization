@@ -128,8 +128,7 @@ def data_table() -> rx.Component:
                             rx.foreach(
                                 row.values(),
                                 lambda val: rx.el.td(
-                                    rx.el.span(val.to_string()),
-                                    class_name="p-2 border-b",
+                                    rx.el.span(val), class_name="p-2 border-b"
                                 ),
                             ),
                             class_name="hover:bg-gray-50",

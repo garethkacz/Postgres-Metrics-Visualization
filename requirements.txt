@@ -3,3 +3,4 @@ reflex==0.8.17
 psycopg2-binary
 pandas
 sshtunnel
+paramiko==2.12.0

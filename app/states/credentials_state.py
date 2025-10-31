@@ -74,7 +74,7 @@ class CredentialsState(rx.State):
         self._save_to_local_storage()
         if not self.active_environment:
             self.active_environment = new_env.name
-        yield from self._reload_schema()
+        yield self._reload_schema()
         yield rx.toast.success(f"Saved environment: {new_env.name}")
         self.current_env = Env()
 
@@ -93,7 +93,7 @@ class CredentialsState(rx.State):
         from .dashboard_state import DashboardState
         from .db_state import DatabaseState
 
-        yield from DashboardState.set_selected_table("")
+        yield DashboardState.set_selected_table("")
         return DatabaseState.fetch_schema
 
     @rx.event
