@@ -81,7 +81,20 @@ Build a full-stack web application that connects to a local PostgreSQL database,
 
 ---
 
-## Phase 7: Interactive Features & Polish
+## Phase 7: SSH Tunnel Support for VPN Database Connections ✅
+- [x] Install sshtunnel library for secure tunneling
+- [x] Add SSH tunnel fields to Env model (ssh_host, ssh_port, ssh_user, ssh_key)
+- [x] Update credentials form with SSH tunnel configuration section
+- [x] Implement SSH tunnel connection logic in DatabaseState._get_db_conn()
+- [x] Support SSH key-based authentication (private key as string)
+- [x] Handle tunnel lifecycle (establish before DB connect, close after)
+- [x] Add comprehensive error handling for tunnel failures
+- [x] Test SSH tunnel configuration and connection flow
+- [x] Document setup instructions for jump host and VPN connectivity
+
+---
+
+## Phase 8: Interactive Features & Polish
 - [ ] Add real-time chart updates when filters change
 - [ ] Implement chart legends with interactive toggling
 - [ ] Add time range selector for visualizations (24h, 7d, 30d, all)
@@ -94,7 +107,7 @@ Build a full-stack web application that connects to a local PostgreSQL database,
 
 ---
 
-## Phase 8: Performance & Documentation
+## Phase 9: Performance & Documentation
 - [ ] Optimize database queries with indexing suggestions
 - [ ] Implement query result caching
 - [ ] Add pagination for large datasets
@@ -106,8 +119,8 @@ Build a full-stack web application that connects to a local PostgreSQL database,
 ---
 
 ## Current Status
-✅ Completed Phases 1, 2, 3, 4, 5, and 6
-🔄 Ready for Phase 7: Interactive Features & Polish
+✅ Completed Phases 1-7
+🔄 Ready for Phase 8: Interactive Features & Polish
 
 **Next Steps:**
 Add interactive features to the visualizations:
@@ -119,40 +132,65 @@ Add interactive features to the visualizations:
 
 ## Implementation Notes
 
+### SSH Tunnel Support (Phase 7)
+The application now supports secure connections to PostgreSQL databases behind VPN using SSH tunnels:
+
+**Connection Architecture:**
+```
+Cloud-Based Reflex App → SSH Tunnel → Jump Host (on VPN) → PostgreSQL Database
+```
+
+**Features Implemented:**
+1. **SSH Tunnel Configuration**: Added SSH fields to environment credentials (host, port, user, private key)
+2. **Automatic Tunnel Management**: Establishes SSH tunnel before database connection when configured
+3. **Security**: All database traffic encrypted via SSH, database never exposed to internet
+4. **Error Handling**: Graceful handling of VPN disconnects, SSH auth failures, and timeout errors
+5. **Key-Based Auth**: Support for SSH private keys stored as strings in browser localStorage
+
+**Setup Instructions:**
+1. **Jump Host Setup** (one-time):
+   - Ensure jump host is connected to GlobalProtect VPN
+   - Jump host must have network access to PostgreSQL database
+   - Configure SSH key-based authentication on jump host
+
+2. **Configure Environment**:
+   - Database Host: Internal database IP (e.g., 10.0.1.50)
+   - Database Port: 5432
+   - SSH Host: Jump host IP or hostname
+   - SSH Port: 22
+   - SSH User: Your SSH username
+   - SSH Private Key: Paste full private key content
+
+3. **Connection Flow**:
+   - App establishes SSH tunnel to jump host
+   - Tunnel forwards local port to database server
+   - App connects to database through tunnel
+   - All traffic encrypted end-to-end
+
+**Error Handling:**
+- VPN/tunnel disconnection → Clear error message, retry logic
+- SSH authentication failure → Specific error with troubleshooting steps
+- Database unreachable → Connection status indicator, helpful guidance
+- Timeout errors → Automatic cleanup and status reporting
+
 ### Intelligent Visualizations (Phase 6)
-The system now includes three specialized time series visualizations:
+The system includes three specialized time series visualizations:
 
-1. **Faults Chart**: 
-   - Single red area chart showing fault occurrences over time
-   - Uses natural curve smoothing for better visual appeal
-   - 30-day time series with random sample data
+1. **Faults Chart**: Single red area chart showing fault occurrences over time
+2. **Jobs Chart**: Dual stacked area chart comparing completed vs failed jobs
+3. **Bots Chart**: Dual stacked area chart showing online vs offline bot status
 
-2. **Jobs Chart**:
-   - Dual stacked area chart comparing completed (green) vs failed (orange) jobs
-   - Provides quick visual comparison of job success rates
-   - Shows trends in job execution over time
-
-3. **Bots Chart**:
-   - Dual stacked area chart showing online (blue) vs offline (gray) bot status
-   - Helps monitor bot availability and uptime
-   - Visualizes infrastructure health over time
-
-All charts feature:
-- Gradient fills for visual depth
-- Responsive sizing
-- Clean tooltips with formatted data
-- Proper axis labels
-- Sample data generation for testing without database
-
-The visualization system is designed to be easily extensible - when you connect to a real database with `faults`, `jobs`, or `bots` tables, the system will automatically use real data instead of sample data.
+All charts feature gradient fills, responsive sizing, clean tooltips, and proper axis labels.
 
 ## Notes
 - Using psycopg2-binary for PostgreSQL connectivity
+- Using sshtunnel for secure VPN-based database access
 - Reflex framework for unified Python frontend/backend
 - Pandas for efficient data manipulation and aggregation
 - Recharts via Reflex for interactive visualizations
-- Database connection includes proper error handling and timeouts
+- Database connection includes SSH tunnel support with comprehensive error handling
 - UI includes comprehensive loading and error states
 - Auto-visualization uses column name patterns and data types for intelligent chart selection
 - Credentials stored in browser localStorage with base64 encoding
-- Charts render with sample data even when database is not connected
+- SSH private keys stored securely in encrypted localStorage
+- Charts render with sample data when database is not connected

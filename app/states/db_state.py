@@ -6,6 +6,8 @@ import logging
 import base64
 import json
 from .credentials_state import CredentialsState
+from sshtunnel import SSHTunnelForwarder
+import io
 
 
 class ColumnInfo(TypedDict):
@@ -39,7 +41,28 @@ class DatabaseState(rx.State):
             self.connection_error = "Active environment not found."
             self.is_connected = False
             return None
-        db_url = f"postgresql://{env.username}:{env.password}@{env.host}:{env.port}/{env.database}"
+        if env.ssh_host and env.ssh_user and env.ssh_key:
+            try:
+                pkey = io.StringIO(env.ssh_key)
+                tunnel = SSHTunnelForwarder(
+                    (env.ssh_host, env.ssh_port),
+                    ssh_username=env.ssh_user,
+                    ssh_pkey=pkey,
+                    remote_bind_address=(env.host, env.port),
+                )
+                tunnel.start()
+                self.set_vars(tunnel=tunnel)
+                db_host = tunnel.local_bind_host
+                db_port = tunnel.local_bind_port
+            except Exception as e:
+                logging.exception(f"SSH tunnel failed: {e}")
+                self.connection_error = f"SSH tunnel failed: {e}"
+                self.is_connected = False
+                return None
+        else:
+            db_host = env.host
+            db_port = env.port
+        db_url = f"postgresql://{env.username}:{env.password}@{db_host}:{db_port}/{env.database}"
         try:
             conn = psycopg2.connect(dsn=db_url, connect_timeout=3)
             return conn
@@ -90,3 +113,6 @@ class DatabaseState(rx.State):
         finally:
             if conn:
                 conn.close()
+            if hasattr(self, "tunnel") and self.tunnel:
+                self.tunnel.stop()
+                self.set_vars(tunnel=None)

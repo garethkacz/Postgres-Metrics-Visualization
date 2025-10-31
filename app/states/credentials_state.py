@@ -13,6 +13,10 @@ class Env(BaseModel):
     database: str = ""
     username: str = ""
     password: str = ""
+    ssh_host: Optional[str] = None
+    ssh_port: int = 22
+    ssh_user: Optional[str] = None
+    ssh_key: Optional[str] = None
 
 
 class CredentialsState(rx.State):
@@ -50,6 +54,10 @@ class CredentialsState(rx.State):
                 database=form_data.get("database", ""),
                 username=form_data.get("username", ""),
                 password=form_data.get("password", ""),
+                ssh_host=form_data.get("ssh_host"),
+                ssh_port=int(form_data.get("ssh_port", 22)),
+                ssh_user=form_data.get("ssh_user"),
+                ssh_key=form_data.get("ssh_key"),
             )
         except (ValueError, TypeError) as e:
             logging.exception(f"Error parsing form data: {e}")

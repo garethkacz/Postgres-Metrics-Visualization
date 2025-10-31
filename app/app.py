@@ -263,6 +263,32 @@ def credentials_modal() -> rx.Component:
                             type="password",
                             default_value=CredentialsState.current_env.password,
                         ),
+                        rx.el.h4(
+                            "SSH Tunnel (Optional)",
+                            class_name="mt-4 text-sm font-medium text-gray-600",
+                        ),
+                        rx.el.input(
+                            name="ssh_host",
+                            placeholder="SSH Host",
+                            default_value=CredentialsState.current_env.ssh_host,
+                        ),
+                        rx.el.input(
+                            name="ssh_port",
+                            placeholder="SSH Port",
+                            type="number",
+                            default_value=CredentialsState.current_env.ssh_port.to_string(),
+                        ),
+                        rx.el.input(
+                            name="ssh_user",
+                            placeholder="SSH User",
+                            default_value=CredentialsState.current_env.ssh_user,
+                        ),
+                        rx.el.textarea(
+                            name="ssh_key",
+                            placeholder="SSH Private Key",
+                            default_value=CredentialsState.current_env.ssh_key,
+                            class_name="h-24",
+                        ),
                         class_name="flex flex-col gap-3",
                     ),
                     rx.el.div(
