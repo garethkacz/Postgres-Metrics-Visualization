@@ -89,31 +89,40 @@ def main_content() -> rx.Component:
 def data_table() -> rx.Component:
     """The data table component."""
     return rx.el.div(
-        rx.el.table(
-            rx.el.thead(
-                rx.el.tr(
-                    rx.foreach(
-                        QueryState.query_results[0].keys(),
-                        lambda col: rx.el.th(col, class_name="p-2 text-left border-b"),
-                    ),
-                    class_name="bg-gray-100",
-                )
-            ),
-            rx.el.tbody(
-                rx.foreach(
-                    QueryState.query_results,
-                    lambda row: rx.el.tr(
+        rx.cond(
+            QueryState.query_results.length() > 0,
+            rx.el.table(
+                rx.el.thead(
+                    rx.el.tr(
                         rx.foreach(
-                            row.values(),
-                            lambda val: rx.el.td(
-                                rx.el.span(val.to_string()), class_name="p-2 border-b"
+                            QueryState.query_results[0].keys(),
+                            lambda col: rx.el.th(
+                                col, class_name="p-2 text-left border-b"
                             ),
                         ),
-                        class_name="hover:bg-gray-50",
-                    ),
-                )
+                        class_name="bg-gray-100",
+                    )
+                ),
+                rx.el.tbody(
+                    rx.foreach(
+                        QueryState.query_results,
+                        lambda row: rx.el.tr(
+                            rx.foreach(
+                                row.values(),
+                                lambda val: rx.el.td(
+                                    rx.el.span(val.to_string()),
+                                    class_name="p-2 border-b",
+                                ),
+                            ),
+                            class_name="hover:bg-gray-50",
+                        ),
+                    )
+                ),
+                class_name="w-full text-sm",
             ),
-            class_name="w-full text-sm",
+            rx.el.div(
+                rx.el.p("No data found for this table."), class_name="p-4 text-gray-500"
+            ),
         ),
         class_name="p-4",
     )

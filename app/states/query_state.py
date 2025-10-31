@@ -30,6 +30,7 @@ class QueryState(rx.State):
         try:
             query = f'SELECT * FROM "{table_name}";'
             df = pd.read_sql_query(query, conn)
+            df = df.astype(str)
             self.query_results = df.to_dict("records")
         except Exception as e:
             logging.exception(f"Error fetching data for table {table_name}: {e}")
