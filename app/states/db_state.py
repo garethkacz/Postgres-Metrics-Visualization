@@ -20,17 +20,23 @@ class DatabaseState(rx.State):
     is_connected: bool = False
     connection_error: str = ""
 
+    @rx.var
+    def table_names(self) -> list[str]:
+        """Return a list of table names."""
+        return [table["name"] for table in self.tables]
+
     def _get_db_conn(self):
-        db_url = os.getenv(
-            "DATABASE_URL",
-            "postgresql://postgres:postgres@10.20.18.167:5432/director_db",
-        )
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url or "=" in db_url:
+            db_url = "postgresql://postgres:postgres@10.20.18.167:5432/director_db"
         try:
-            conn = psycopg2.connect(db_url, connect_timeout=3)
+            conn = psycopg2.connect(dsn=db_url, connect_timeout=3)
             return conn
-        except psycopg2.OperationalError as e:
+        except Exception as e:
             logging.exception(f"Error connecting to database: {e}")
-            self.connection_error = f"Failed to connect to the database. Please ensure it's running and accessible. Error: {e}"
+            error_message = str(e).split("""
+""")[0]
+            self.connection_error = f"Failed to connect: {error_message}"
             self.is_connected = False
             return None
 
