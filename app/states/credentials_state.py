@@ -93,8 +93,8 @@ class CredentialsState(rx.State):
         from .dashboard_state import DashboardState
         from .db_state import DatabaseState
 
-        yield DashboardState.set_selected_table("")
-        yield DatabaseState.fetch_schema
+        yield from DashboardState.set_selected_table("")
+        return DatabaseState.fetch_schema
 
     @rx.event
     def delete_environment(self, env_name: str):
