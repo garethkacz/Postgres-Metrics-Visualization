@@ -57,15 +57,29 @@ def main_content() -> rx.Component:
                     ),
                     class_name="text-2xl font-bold",
                 ),
-                rx.cond(
-                    DashboardState.selected_table != "",
-                    rx.el.button(
-                        rx.icon("download", class_name="h-4 w-4 mr-2"),
-                        "Download JSON",
-                        on_click=QueryState.download_data,
-                        class_name="flex items-center px-3 py-1.5 border rounded-md text-sm bg-white hover:bg-gray-50",
+                rx.el.div(
+                    rx.cond(
+                        DashboardState.selected_table != "",
+                        rx.el.button(
+                            rx.icon("download", class_name="h-4 w-4 mr-2"),
+                            "Download Table",
+                            on_click=QueryState.download_data,
+                            class_name="flex items-center px-3 py-1.5 border rounded-md text-sm bg-white hover:bg-gray-50",
+                        ),
+                        None,
                     ),
-                    None,
+                    rx.cond(
+                        DatabaseState.is_connected,
+                        rx.el.button(
+                            rx.icon("database", class_name="h-4 w-4 mr-2"),
+                            "Download All Tables",
+                            on_click=QueryState.download_all_data,
+                            class_name="flex items-center px-3 py-1.5 border rounded-md text-sm bg-white hover:bg-gray-50",
+                            is_loading=QueryState.is_downloading_all,
+                        ),
+                        None,
+                    ),
+                    class_name="flex items-center gap-2",
                 ),
                 class_name="flex items-center justify-between w-full",
             ),

@@ -10,6 +10,7 @@ class QueryState(rx.State):
     """Handles querying the database and storing results."""
 
     is_loading: bool = False
+    is_downloading_all: bool = False
     query_results: list[dict] = []
     query_error: str = ""
 
@@ -32,6 +33,51 @@ class QueryState(rx.State):
         return rx.download(data=data, filename=filename)
 
     @rx.event
+    async def download_all_data(self):
+        """Download all tables from the database as a single JSON file."""
+        self.is_downloading_all = True
+        yield
+        db_state = await self.get_state(DatabaseState)
+        if not db_state.is_connected:
+            self.is_downloading_all = False
+            yield rx.toast.error("Not connected to any database.")
+            return
+        all_data = {}
+        conn = await db_state._get_db_conn()
+        if not conn:
+            self.is_downloading_all = False
+            yield rx.toast.error(f"Connection failed: {db_state.connection_error}")
+            return
+        try:
+            for table_name in db_state.table_names:
+                try:
+                    query = f'SELECT * FROM "{table_name}";'
+                    df = pd.read_sql_query(query, conn)
+                    df = df.astype(str)
+                    all_data[table_name] = df.to_dict("records")
+                except Exception as e:
+                    logging.exception(
+                        f"Error fetching data for table {table_name} during all-data download: {e}"
+                    )
+                    yield rx.toast.error(
+                        f"Skipping table {table_name} due to an error."
+                    )
+            if not all_data:
+                yield rx.toast.warning("No data could be fetched from any table.")
+                self.is_downloading_all = False
+                return
+            filename = f"all_tables_export.json"
+            data_str = json.dumps(all_data, indent=2)
+            yield rx.download(data=data_str, filename=filename)
+        except Exception as e:
+            logging.exception(f"Error during all-data download: {e}")
+            yield rx.toast.error("An unexpected error occurred.")
+        finally:
+            if conn:
+                conn.close()
+            self.is_downloading_all = False
+
+    @rx.event
     async def handle_data_upload(self, files: list[rx.UploadFile]):
         """Handle upload of a JSON data file."""
         if not files:
@@ -49,6 +95,7 @@ class QueryState(rx.State):
             self.is_loading = False
             self.query_error = ""
             yield rx.toast.success(f"Successfully loaded {file.name}")
+            yield QueryState.download_data
         except Exception as e:
             logging.exception(f"Failed to process uploaded file: {e}")
             yield rx.toast.error(f"Invalid JSON file: {e}")
