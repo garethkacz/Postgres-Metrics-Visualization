@@ -87,7 +87,7 @@ class CredentialsState(rx.State):
     def set_active_environment(self, env_name: str):
         """Set the active environment and reload schema."""
         self.active_environment = env_name
-        yield from self._reload_schema()
+        yield self._reload_schema()
 
     def _reload_schema(self):
         from .dashboard_state import DashboardState
@@ -105,7 +105,7 @@ class CredentialsState(rx.State):
                 self.environments[0].name if self.environments else ""
             )
         self._save_to_local_storage()
-        yield from self._reload_schema()
+        yield self._reload_schema()
 
     @rx.event
     def edit_environment(self, env_name: str):
