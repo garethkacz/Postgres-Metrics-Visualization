@@ -2,6 +2,7 @@ import reflex as rx
 import datetime
 import random
 from typing import Any
+from .query_state import QueryState
 
 
 class VizState(rx.State):
@@ -44,3 +45,16 @@ class VizState(rx.State):
             }
             for i in range(30)
         ][::-1]
+
+    @rx.event
+    async def update_viz_data(self):
+        qs = await self.get_state(QueryState)
+        if not qs.query_results:
+            return
+        ds = await self.get_state((await self.get_state("__dashboard_state")).__class__)
+        if ds.selected_table == "faults":
+            self.faults_data = qs.query_results
+        elif ds.selected_table == "jobs":
+            self.jobs_data = qs.query_results
+        elif ds.selected_table == "bots":
+            self.bots_data = qs.query_results

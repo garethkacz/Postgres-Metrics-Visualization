@@ -11,8 +11,11 @@ class DashboardState(rx.State):
     @rx.event
     def set_selected_table(self, table_name: str):
         """Set the selected table and trigger data fetch."""
+        from .viz_state import VizState
+
         self.selected_table = table_name
-        return QueryState.fetch_data(table_name)
+        yield QueryState.fetch_data(table_name)
+        yield VizState.update_viz_data
 
     @rx.var
     async def selected_table_info(self) -> TableInfo | None:
