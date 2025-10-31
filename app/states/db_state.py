@@ -8,6 +8,7 @@ import json
 from .credentials_state import CredentialsState
 from sshtunnel import SSHTunnelForwarder
 import io
+import paramiko
 
 
 class ColumnInfo(TypedDict):
@@ -43,7 +44,8 @@ class DatabaseState(rx.State):
             return None
         if env.ssh_host and env.ssh_user and env.ssh_key:
             try:
-                pkey = io.StringIO(env.ssh_key)
+                pkey_file = io.StringIO(env.ssh_key)
+                pkey = paramiko.RSAKey.from_private_key(pkey_file)
                 tunnel = SSHTunnelForwarder(
                     (env.ssh_host, env.ssh_port),
                     ssh_username=env.ssh_user,
